@@ -30,20 +30,20 @@ class ElementInspector {
 	createInfoPanel() {
 		const panel = document.createElement("infoPanel");
 		panel.style.cssText = `
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.90);
-            color: #EFECEF;
-            font-family: monospace;
-            padding: 2px 6px 5px 6px;
-            z-index: 2147483647;
-            font-size: 14px;
-            display: none;
-            height: 30px;
-            line-height: 22px;
-        `;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(0, 0, 0, 0.90);
+                color: #EFECEF;
+                font-family: monospace;
+                padding: 2px 6px 5px 6px;
+                z-index: 2147483647;
+                font-size: 14px;
+                display: none;
+                height: 30px;
+                line-height: 22px;
+            `;
 		document.body.appendChild(panel);
 		return panel;
 	}
@@ -69,8 +69,8 @@ class ElementInspector {
 
 			const selector = [
 				element.tagName.toLowerCase(),
-				element.id ? `#${element.id}` : "",
-				...Array.from(element.classList).map((c) => `.${c}`),
+				element.id ? ` #${element.id}` : "",
+				...Array.from(element.classList).map((c) => ` .${c}`),
 			].join("");
 
 			this.infoPanel.textContent = selector;
