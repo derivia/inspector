@@ -1,23 +1,24 @@
 class ElementInspector {
 	constructor() {
-		this.infoPanel = this.createInfoPanel();
 		this.isCtrlPressed = false;
 		this.isActive = false;
 		this.currentHoveredElement = null;
-		this.handleKeyDown = this.handleKeyDown.bind(this);
-		this.handleKeyUp = this.handleKeyUp.bind(this);
-		this.handleMouseMove = this.handleMouseMove.bind(this);
+		this.infoPanel = this.createInfoPanel();
 		this.setupListeners();
 	}
 
+	/**
+	 * @returns {div} Info panel div that sticks below to the window when CTRL is held
+	 */
 	createInfoPanel() {
-		const panel = document.createElement("infoPanel");
+		const panel = document.createElement("div");
+		panel.id = "infoPanel";
 		panel.style.cssText = `
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 0, 0, 0.90);
+            background: rgba(0, 0, 0, 0.9);
             color: #EFECEF;
             font-family: monospace;
             padding: 2px 6px 5px 6px;
@@ -31,24 +32,40 @@ class ElementInspector {
 		return panel;
 	}
 
+	/**
+	 * @param {any} e Event when key is down
+	 * Enable hover-dashed-border and show info panel
+	 */
 	handleKeyDown(e) {
 		if (!this.isActive) return;
-		if (e.key === "Control" || e.ctrlKey) {
+		if (e.key === "Control") {
 			this.isCtrlPressed = true;
 			this.infoPanel.style.display = "block";
-			this.currentHoveredElement.classList.add("inspector-hover");
+			if (this.currentHoveredElement) {
+				this.currentHoveredElement.classList.add("inspector-hover");
+			}
 		}
 	}
 
+	/**
+	 * @param {any} e Event when key is up
+	 * Disable hover-dashed-border and hide info panel
+	 */
 	handleKeyUp(e) {
 		if (!this.isActive) return;
-		if (e.key === "Control" || e.ctrlKey) {
+		if (e.key === "Control") {
 			this.isCtrlPressed = false;
 			this.infoPanel.style.display = "none";
-			this.currentHoveredElement.classList.remove("inspector-hover");
+			if (this.currentHoveredElement) {
+				this.currentHoveredElement.classList.remove("inspector-hover");
+			}
 		}
 	}
 
+	/**
+	 * @param {any} e Event when mouse is moving
+	 * Get current hovered element based on mouse position and apply hover-css style
+	 */
 	handleMouseMove(e) {
 		if (!this.isActive) return;
 
@@ -69,11 +86,11 @@ class ElementInspector {
 			const selector = [
 				this.currentHoveredElement.tagName.toLowerCase(),
 				this.currentHoveredElement.id
-					? ` #${this.currentHoveredElement.id}`
+					? `#${this.currentHoveredElement.id}`
 					: "",
 				...Array.from(this.currentHoveredElement.classList)
 					.filter((c) => c !== "inspector-hover")
-					.map((c) => ` .${c}`),
+					.map((c) => `.${c}`),
 			].join("");
 
 			this.infoPanel.textContent = selector;
@@ -81,22 +98,21 @@ class ElementInspector {
 	}
 
 	setupListeners() {
-		if (!this.isActive) return;
-		document.addEventListener("keydown", this.handleKeyDown);
-		document.addEventListener("keyup", this.handleKeyUp);
-		document.addEventListener("mousemove", this.handleMouseMove);
+		document.addEventListener("keydown", this.handleKeyDown.bind(this));
+		document.addEventListener("keyup", this.handleKeyUp.bind(this));
+		document.addEventListener("mousemove", this.handleMouseMove.bind(this));
 	}
 
+	/** Clear extension-related divs and styles when the extension is disabled */
 	cleanup() {
-		this.isActive = !this.isActive;
-		this.isCtrlPressed = !this.isActive;
+		this.isActive = false;
+		this.isCtrlPressed = false;
 		if (this.currentHoveredElement) {
 			this.currentHoveredElement.classList.remove("inspector-hover");
 		}
 		this.infoPanel.style.display = "none";
 		document.removeEventListener("keydown", this.handleKeyDown);
-		document.removeEventListener("keyup", this.handleKeyUp);
-		document.removeEventListener("mousemove", this.handleMouseMove);
+		document.removeEventListener("keyup", this.handleKeyUp); document.removeEventListener("mousemove", this.handleMouseMove);
 		if (this.infoPanel.parentNode) {
 			document.body.removeChild(this.infoPanel);
 		}
@@ -106,15 +122,41 @@ class ElementInspector {
 
 let elementInspector;
 
+/** Message system that manages the content script injection.
+ * Creates a element inspector and destroys it based on extension state
+ *
+ * Based on DOM tree nodes, check depth of Node and add different colors
+ */
 browser.runtime.onMessage.addListener((message) => {
 	if (message.type === "toggle") {
-		if (!elementInspector) {
-			elementInspector = new ElementInspector();
-			elementInspector.isActive = true;
-			elementInspector.setupListeners();
+		if (message.active) {
+			if (!elementInspector) {
+				elementInspector = new ElementInspector();
+				elementInspector.isActive = true;
+
+				document.querySelectorAll("*").forEach((el) => {
+					el.dataset.depth = getElementDepth(el);
+				});
+
+				function getElementDepth(el) {
+					let depth = 0;
+					let parent = el.parentElement;
+					while (parent) {
+						depth++;
+						parent = parent.parentElement;
+					}
+					return depth;
+				}
+			}
 		} else {
-			elementInspector.cleanup();
-			elementInspector = null;
+			if (elementInspector) {
+				elementInspector.cleanup();
+				elementInspector = null;
+
+				document.querySelectorAll("*").forEach((el) => {
+					delete el.dataset.depth;
+				});
+			}
 		}
 	}
 });
