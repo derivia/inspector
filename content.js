@@ -86,11 +86,11 @@ class ElementInspector {
 			const selector = [
 				this.currentHoveredElement.tagName.toLowerCase(),
 				this.currentHoveredElement.id
-					? `#${this.currentHoveredElement.id}`
+					? ` #${this.currentHoveredElement.id}`
 					: "",
 				...Array.from(this.currentHoveredElement.classList)
 					.filter((c) => c !== "inspector-hover")
-					.map((c) => `.${c}`),
+					.map((c) => ` .${c}`),
 			].join("");
 
 			this.infoPanel.textContent = selector;
@@ -112,7 +112,8 @@ class ElementInspector {
 		}
 		this.infoPanel.style.display = "none";
 		document.removeEventListener("keydown", this.handleKeyDown);
-		document.removeEventListener("keyup", this.handleKeyUp); document.removeEventListener("mousemove", this.handleMouseMove);
+		document.removeEventListener("keyup", this.handleKeyUp);
+		document.removeEventListener("mousemove", this.handleMouseMove);
 		if (this.infoPanel.parentNode) {
 			document.body.removeChild(this.infoPanel);
 		}
