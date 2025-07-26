@@ -97,10 +97,28 @@ class ElementInspector {
 		}
 	}
 
+	handleClick(e) {
+		if (!this.isActive || !this.isCtrlPressed) return;
+		e.preventDefault();
+		e.stopPropagation();
+
+		const selectorText = this.infoPanel.textContent;
+		if (!selectorText) return;
+		console.log(`Copied CSS: ${selectorText}`);
+
+		navigator.clipboard.writeText(selectorText).then(() => {
+			this.infoPanel.textContent = "Selector copied!";
+			setTimeout(() => {
+				this.infoPanel.textContent = "";
+			}, 1000);
+		});
+	}
+
 	setupListeners() {
 		document.addEventListener("keydown", this.handleKeyDown.bind(this));
 		document.addEventListener("keyup", this.handleKeyUp.bind(this));
 		document.addEventListener("mousemove", this.handleMouseMove.bind(this));
+		document.addEventListener("click", this.handleClick.bind(this), true);
 	}
 
 	/** Clear extension-related divs and styles when the extension is disabled */
@@ -114,6 +132,7 @@ class ElementInspector {
 		document.removeEventListener("keydown", this.handleKeyDown);
 		document.removeEventListener("keyup", this.handleKeyUp);
 		document.removeEventListener("mousemove", this.handleMouseMove);
+		document.removeEventListener("click", this.handleClick, true);
 		if (this.infoPanel.parentNode) {
 			document.body.removeChild(this.infoPanel);
 		}
